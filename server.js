@@ -1,3 +1,7 @@
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("yamljs");
+const swaggerDocument = YAML.load("./openapi.yaml");
+
 const express = require("express");
 const app = express();
 
@@ -82,6 +86,7 @@ app.get("/authors", (req, res) => {
   res.json(uniqueAuthors);
 });
 
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.listen(3000, () => {
   console.log("Server running on port 3000");
 });
