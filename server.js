@@ -1,11 +1,30 @@
 const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
 const swaggerDocument = YAML.load("./openapi.yaml");
-
+const logger = require("./logger");
 const express = require("express");
-const app = express();
 
+const app = express();
 app.use(express.json());
+
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+
+    logger.info({
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      duration: duration + "ms"
+    });
+  }
+  );
+
+  next();
+}); 
+
 
 let books = [];
 let nextId = 1;
@@ -88,5 +107,13 @@ app.get("/authors", (req, res) => {
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.listen(3000, () => {
-  console.log("Server running on port 3000");
+  logger.info("Server running on port 3000");
+});
+
+app.use((err, req, res, next) => {
+  logger.error({
+    message: err.message,
+    stack: err.stack
+  });
+  res.status(500).json({ error: "Internal server error" });
 });
