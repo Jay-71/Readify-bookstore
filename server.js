@@ -7,7 +7,11 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
+let totalRequests = 0;
+const startTime = Date.now();
+
 app.use((req, res, next) => {
+  totalRequests++;
   const start = Date.now();
 
   res.on("finish", () => {
@@ -103,6 +107,23 @@ app.delete("/books/:id", (req, res) => {
 app.get("/authors", (req, res) => {
   const uniqueAuthors = [...new Set(books.map(book => book.author))];
   res.json(uniqueAuthors);
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    uptime: process.uptime(),
+    timestramp: new Date().toISOString()
+  });
+});
+
+app.get("/metrics", (req, res) => {
+  res.status(200).json({
+    totalRequests,
+    uptimeSeconds: process.uptime(),
+    memoryUsage: process.memoryUsage(),
+    cpuUsage: process.cpuUsage()
+  });
 });
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
